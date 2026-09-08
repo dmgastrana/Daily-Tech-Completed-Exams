@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,9 +78,21 @@
             color: red;
             display: none;
         }
+
+        #successMessage {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            color: green;
+            display: none;
+        }
     </style>
 
+    <!-- XLSX Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Your JS file -->
     <script src="daily.js"></script>
 </head>
 
@@ -93,9 +106,10 @@
         <button onclick="downloadOutput()">Download Output</button>
     </div>
 
+    <!-- Status Messages -->
     <div id="processing">Processing… please wait</div>
-
     <div id="errorMessage">Error: Could not generate tables. Please check your file.</div>
+    <div id="successMessage">Completed! Tables generated below.</div>
 
     <div id="mainContainer">
         <div id="leftColumn"></div>
@@ -104,3 +118,4 @@
 
 </body>
 </html>
+
