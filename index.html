@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Daily Summary Reports</title>
+    <title>Daily Tech Completed-Exams</title>
 
     <!-- XLSX Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -67,14 +68,13 @@
 
 <body>
 
-    <h2>Daily Summary Reports</h2>
+    <h2>Daily Tech Completed-Exams</h2>
 
     <div id="uploadSection">
         <input type="file" id="dailyFile" accept=".xlsx,.xls,.csv">
 
         <button onclick="runDailySummary()">Generate Summary</button>
 
-        <!-- ⭐ NEW: Download Output -->
         <button onclick="downloadOutput()">Download Output</button>
 
         <button onclick="downloadPDF()">Download PDF</button>
@@ -87,7 +87,7 @@
         <div id="rightColumn" class="column"></div>
     </div>
 
-    <!-- Hidden tables (JS moves them into columns automatically) -->
+    <!-- Hidden tables -->
     <div style="display:none;">
         <h2>Summary by Location</h2>
         <table id="locTable"></table>
