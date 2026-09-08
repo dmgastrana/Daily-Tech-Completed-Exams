@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,4 +45,71 @@
         }
 
         th, td {
-            padding
+            padding: 6px;
+            border: 1px solid #ccc;
+            white-space: nowrap;
+        }
+
+        #reportContainer {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .column {
+            width: 49.8%;
+            margin-right: 0.2%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ⭐ Your REAL visible title -->
+    <h2>Daily Tech Completed-Exams</h2>
+
+    <div id="uploadSection">
+        <input type="file" id="dailyFile" accept=".xlsx,.xls,.csv">
+        <button onclick="runDailySummary()">Generate Summary</button>
+        <button onclick="downloadOutput()">Download Output</button>
+        <button onclick="downloadPDF()">Download PDF</button>
+    </div>
+
+    <div id="dateHeader"></div>
+
+    <div id="reportContainer">
+        <div id="leftColumn" class="column"></div>
+        <div id="rightColumn" class="column"></div>
+    </div>
+
+    <!-- ⭐ Hidden tables — CHANGED from <h2> to <h3> -->
+    <div style="display:none;">
+        <h3>Summary by Location</h3>
+        <table id="locTable"></table>
+
+        <h3>Summary by Modality</h3>
+        <table id="modTable"></table>
+
+        <h3># No Show Summary</h3>
+        <table id="noShowSummaryTable"></table>
+
+        <h3>Total Reported / Pending Read</h3>
+        <table id="statusTable"></table>
+
+        <h3>Backlog (All Dates Before Latest DOS)</h3>
+        <table id="backlogTable"></table>
+
+        <h3># Historical Exam Data</h3>
+        <table id="historicalSummaryTable"></table>
+
+        <h3>Summary by Modality per Location</h3>
+        <table id="modalityPerLocationTable"></table>
+
+        <h3>Summary No Show by Modality per Location</h3>
+        <table id="noShowPerLocationTable"></table>
+    </div>
+
+</body>
+</html>
