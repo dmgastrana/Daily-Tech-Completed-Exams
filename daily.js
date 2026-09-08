@@ -513,7 +513,4 @@ function renderNoShowSummary(noShowLocation) {
 
         totalNoShow += locTotal;
 
-        html += `<tr><td>${loc}</td><td>${locTotal}</td></tr>`;
-    });
- 
-    html +=
+        html += `<
