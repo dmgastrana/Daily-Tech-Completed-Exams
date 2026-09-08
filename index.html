@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Summary Reports</title>
+
+    <!-- XLSX Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- jsPDF + html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Your JS -->
+    <script src="daily.js?v=17"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        h2 {
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-size: 17px;
+        }
+
+        #uploadSection {
+            margin-bottom: 20px;
+        }
+
+        #dateHeader {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 15px;
+        }
+
+        th, td {
+            padding: 6px;
+            border: 1px solid #ccc;
+            white-space: nowrap;
+        }
+
+        #reportContainer {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .column {
+            width: 49.8%;
+            margin-right: 0.2%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Daily Summary Reports</h2>
+
+    <div id="uploadSection">
+        <input type="file" id="dailyFile" accept=".xlsx,.xls,.csv">
+
+        <button onclick="runDailySummary()">Generate Summary</button>
+
+        <!-- ⭐ NEW: Download Output -->
+        <button onclick="downloadOutput()">Download Output</button>
+
+        <button onclick="downloadPDF()">Download PDF</button>
+    </div>
+
+    <div id="dateHeader"></div>
+
+    <div id="reportContainer">
+        <div id="leftColumn" class="column"></div>
+        <div id="rightColumn" class="column"></div>
+    </div>
+
+    <!-- Hidden tables (JS moves them into columns automatically) -->
+    <div style="display:none;">
+        <h2>Summary by Location</h2>
+        <table id="locTable"></table>
+
+        <h2>Summary by Modality</h2>
+        <table id="modTable"></table>
+
+        <h2># No Show Summary</h2>
+        <table id="noShowSummaryTable"></table>
+
+        <h2>Total Reported / Pending Read</h2>
+        <table id="statusTable"></table>
+
+        <h2>Backlog (All Dates Before Latest DOS)</h2>
+        <table id="backlogTable"></table>
+
+        <h2># Historical Exam Data</h2>
+        <table id="historicalSummaryTable"></table>
+
+        <h2>Summary by Modality per Location</h2>
+        <table id="modalityPerLocationTable"></table>
+
+        <h2>Summary No Show by Modality per Location</h2>
+        <table id="noShowPerLocationTable"></table>
+    </div>
+
+</body>
+</html>
