@@ -19,36 +19,57 @@ const TABLE_STRUCTURE = {
 };
 
 /* ============================================================
-   MAIN ENTRY — DETECT CSV OR EXCEL
+   MAIN ENTRY — RUN DAILY SUMMARY
    ============================================================ */
 
 function runDailySummary() {
     const fileInput = document.getElementById("dailyFile");
     const file = fileInput.files[0];
 
+    // Reset messages
+    document.getElementById("processing").style.display = "none";
+    document.getElementById("errorMessage").style.display = "none";
+    document.getElementById("successMessage").style.display = "none";
+
     if (!file) {
-        alert("Please upload a file.");
+        document.getElementById("errorMessage").innerText = "No file selected.";
+        document.getElementById("errorMessage").style.display = "block";
         return;
     }
+
+    // Show processing
+    document.getElementById("processing").style.display = "block";
 
     const reader = new FileReader();
     const fileName = file.name.toLowerCase();
 
+    reader.onload = function(e) {
+        try {
+            if (fileName.endsWith(".csv")) {
+                parseCSV(e.target.result);
+            } else {
+                parseExcel(e.target.result);
+            }
+
+            document.getElementById("processing").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+
+        } catch (err) {
+            document.getElementById("processing").style.display = "none";
+            document.getElementById("errorMessage").innerText = "Error: " + err.message;
+            document.getElementById("errorMessage").style.display = "block";
+        }
+    };
+
     if (fileName.endsWith(".csv")) {
-        reader.onload = function(e) {
-            parseCSV(e.target.result);
-        };
         reader.readAsText(file);
     } else {
-        reader.onload = function(e) {
-            parseExcel(e.target.result);
-        };
         reader.readAsArrayBuffer(file);
     }
 }
 
 /* ============================================================
-   PARSE CSV — HEADER IS ROW 8, DATA STARTS ROW 9
+   PARSE CSV — HEADER ROW 8, DATA STARTS ROW 9
    ============================================================ */
 
 function parseCSV(text) {
@@ -57,7 +78,7 @@ function parseCSV(text) {
 }
 
 /* ============================================================
-   PARSE EXCEL — HEADER IS ROW 8, DATA STARTS ROW 9
+   PARSE EXCEL — HEADER ROW 8, DATA STARTS ROW 9
    ============================================================ */
 
 function parseExcel(buffer) {
@@ -88,22 +109,41 @@ function fixDate(value) {
    ============================================================ */
 
 function generateMonthlyTables(aoa) {
-    const monthlyData = {};
+
+    document.getElementById("errorMessage").style.display = "none";
+    document.getElementById("successMessage").style.display = "none";
 
     const HEADER_ROW = 8;
     const DATA_START = HEADER_ROW + 1;
 
+    if (!aoa || aoa.length <= DATA_START) {
+        document.getElementById("errorMessage").innerText = "Error: File is too short.";
+        document.getElementById("errorMessage").style.display = "block";
+        return;
+    }
+
+    if (!aoa[HEADER_ROW] || aoa[HEADER_ROW].length < 7) {
+        document.getElementById("errorMessage").innerText = "Error: Header row not found at row 8.";
+        document.getElementById("errorMessage").style.display = "block";
+        return;
+    }
+
+    let foundValidRow = false;
+    const monthlyData = {};
+
     for (let r = DATA_START; r < aoa.length; r++) {
-        const modality = String(aoa[r][0] || "").trim(); // Column A
-        const locationFull = String(aoa[r][1] || "").trim(); // Column B
-        const dosRaw = aoa[r][5]; // Column F
-        const apptID = String(aoa[r][6] || "").trim(); // Column G
+        const modality = String(aoa[r][0] || "").trim();
+        const locationFull = String(aoa[r][1] || "").trim();
+        const dosRaw = aoa[r][5];
+        const apptID = String(aoa[r][6] || "").trim();
 
         const dos = fixDate(dosRaw);
         if (!dos) continue;
 
         const loc = LOCATION_MAP[locationFull];
         if (!loc) continue;
+
+        foundValidRow = true;
 
         const dateObj = new Date(dos);
         const monthKey = `${dateObj.getFullYear()}-${dateObj.getMonth() + 1}`;
@@ -117,6 +157,12 @@ function generateMonthlyTables(aoa) {
 
         monthlyData[monthKey][dos][loc][modality] =
             (monthlyData[monthKey][dos][loc][modality] || 0) + 1;
+    }
+
+    if (!foundValidRow) {
+        document.getElementById("errorMessage").innerText = "Error: No valid exam rows found.";
+        document.getElementById("errorMessage").style.display = "block";
+        return;
     }
 
     displayMonthlyTables(monthlyData);
@@ -237,7 +283,7 @@ function buildMonthlyTable(monthData, dates) {
 }
 
 /* ============================================================
-   DOWNLOAD OUTPUT 
+   DOWNLOAD OUTPUT
    ============================================================ */
 
 function downloadOutput() {
