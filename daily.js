@@ -32,41 +32,39 @@ function runDailySummary() {
     }
 
     const reader = new FileReader();
+    const fileName = file.name.toLowerCase();
 
-    reader.onload = function (e) {
-        const fileName = file.name.toLowerCase();
-
-        if (fileName.endsWith(".csv")) {
+    if (fileName.endsWith(".csv")) {
+        reader.onload = function(e) {
             parseCSV(e.target.result);
-        } else {
+        };
+        reader.readAsText(file);
+    } else {
+        reader.onload = function(e) {
             parseExcel(e.target.result);
-        }
-    };
-
-    reader.readAsText(file);
+        };
+        reader.readAsArrayBuffer(file);
+    }
 }
 
 /* ============================================================
-   PARSE CSV — HEADER IS IN ROW 8
+   PARSE CSV — HEADER IS ROW 8, DATA STARTS ROW 9
    ============================================================ */
 
 function parseCSV(text) {
     const rows = text.split(/\r?\n/).map(r => r.split(","));
-    generateMonthlyTables(rows, "csv");
+    generateMonthlyTables(rows);
 }
 
 /* ============================================================
-   PARSE EXCEL — HEADER IS IN ROW 8
+   PARSE EXCEL — HEADER IS ROW 8, DATA STARTS ROW 9
    ============================================================ */
 
 function parseExcel(buffer) {
-    const data = new Uint8Array(buffer);
-    const workbook = XLSX.read(data, { type: "array" });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-    generateMonthlyTables(aoa, "excel");
+    generateMonthlyTables(aoa);
 }
 
 /* ============================================================
@@ -81,24 +79,21 @@ function fixDate(value) {
         return `${String(d.m).padStart(2, "0")}/${String(d.d).padStart(2, "0")}/${d.y}`;
     }
 
-    const cleaned = String(value).trim();
-    const d = new Date(cleaned);
-    if (!isNaNa(d)) return d.toLocaleDateString("en-US");
-
-    return "";
+    const d = new Date(String(value).trim());
+    return isNaN(d) ? "" : d.toLocaleDateString("en-US");
 }
 
 /* ============================================================
-   MONTHLY TABLE GENERATION — HEADER IN ROW 8
+   MONTHLY TABLE GENERATION
    ============================================================ */
 
-function generateMonthlyTables(aoa, fileType) {
+function generateMonthlyTables(aoa) {
     const monthlyData = {};
 
-    // BOTH CSV and Excel use header row 8
-    const startRow = 9;
+    const HEADER_ROW = 8;
+    const DATA_START = HEADER_ROW + 1;
 
-    for (let r = startRow; r < aoa.length; r++) {
+    for (let r = DATA_START; r < aoa.length; r++) {
         const modality = String(aoa[r][0] || "").trim(); // Column A
         const locationFull = String(aoa[r][1] || "").trim(); // Column B
         const dosRaw = aoa[r][5]; // Column F
@@ -117,13 +112,9 @@ function generateMonthlyTables(aoa, fileType) {
         if (!monthlyData[monthKey][dos]) monthlyData[monthKey][dos] = {};
         if (!monthlyData[monthKey][dos][loc]) monthlyData[monthKey][dos][loc] = {};
 
-        // Count each row by Appointment ID
-        if (!monthlyData[monthKey][dos][loc].apptCount) {
-            monthlyData[monthKey][dos][loc].apptCount = 0;
-        }
-        monthlyData[monthKey][dos][loc].apptCount++;
+        monthlyData[monthKey][dos][loc].apptCount =
+            (monthlyData[monthKey][dos][loc].apptCount || 0) + 1;
 
-        // Modality counts
         monthlyData[monthKey][dos][loc][modality] =
             (monthlyData[monthKey][dos][loc][modality] || 0) + 1;
     }
@@ -153,7 +144,6 @@ function displayMonthlyTables(monthlyData) {
             const lastDOS = dates[dates.length - 1];
 
             const title = `${firstDOS} – ${lastDOS}`;
-
             const table = buildMonthlyTable(monthlyData[monthKey], dates);
 
             const wrapper = document.createElement("div");
@@ -188,7 +178,6 @@ function buildMonthlyTable(monthData, dates) {
     });
 
     header += "<th>Grand Total</th></tr>";
-
     table.innerHTML = header;
 
     dates.forEach(dos => {
@@ -221,19 +210,17 @@ function buildMonthlyTable(monthData, dates) {
         let locMonthTotal = 0;
 
         dates.forEach(dos => {
-            const val = monthData[dos][loc].apptCount || 0;
-            locMonthTotal += val;
+            locMonthTotal += monthData[dos][loc].apptCount || 0;
         });
 
         TABLE_STRUCTURE[loc].forEach(mod => {
             let modTotal = 0;
 
             dates.forEach(dos => {
-                const val =
+                modTotal +=
                     monthData[dos][loc] && monthData[dos][loc][mod]
                         ? monthData[dos][loc][mod]
                         : 0;
-                modTotal += val;
             });
 
             totalRow += `<td>${modTotal || ""}</td>`;
@@ -256,4 +243,3 @@ function buildMonthlyTable(monthData, dates) {
 function downloadOutput() {
     alert("Monthly tables are visual only. No text output generated.");
 }
-
