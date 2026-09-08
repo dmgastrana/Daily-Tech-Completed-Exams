@@ -237,7 +237,7 @@ function buildMonthlyTable(monthData, dates) {
 }
 
 /* ============================================================
-   DOWNLOAD OUTPUT
+   DOWNLOAD OUTPUT 
    ============================================================ */
 
 function downloadOutput() {
