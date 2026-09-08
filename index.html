@@ -1,114 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Daily Tech Completed-Exams</title>
-
-    <!-- XLSX Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- jsPDF + html2canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <!-- Your JS -->
-    <script src="daily.js?v=17"></script>
+    <title>Monthly Completed Exams</title>
 
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background: #f7f7f7;
+        }
+
+        h1 {
             text-align: center;
-            font-size: 15px;
+            margin-bottom: 30px;
         }
 
-        h2 {
-            margin-top: 18px;
-            margin-bottom: 6px;
-            font-size: 17px;
+        #controls {
+            text-align: center;
+            margin-bottom: 25px;
         }
 
-        #uploadSection {
-            margin-bottom: 20px;
+        #controls input {
+            margin-right: 10px;
         }
 
-        #dateHeader {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        table {
-            border-collapse: collapse;
-            margin-left: auto;
-            margin-right: auto;
-            font-size: 15px;
-        }
-
-        th, td {
-            padding: 6px;
-            border: 1px solid #ccc;
-            white-space: nowrap;
-        }
-
-        #reportContainer {
+        #mainContainer {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: flex-start;
+            justify-content: center;
             width: 100%;
         }
 
-        .column {
-            width: 49.8%;
-            margin-right: 0.2%;
+        #leftColumn, #rightColumn {
+            width: 48%;
+            padding: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        th {
+            background: #eaeaea;
+        }
+
+        .titleRow {
+            text-align: right;
+            font-size: 18px;
+            margin-bottom: 8px;
+            font-weight: bold;
         }
     </style>
+
+    <!-- XLSX Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Your JS file -->
+    <script src="daily.js"></script>
 </head>
 
 <body>
 
-    <!-- ⭐ Your REAL visible title -->
-    <h2>Daily Tech Completed-Exams</h2>
+    <h1>Monthly Completed Exams</h1>
 
-    <div id="uploadSection">
-        <input type="file" id="dailyFile" accept=".xlsx,.xls,.csv">
-        <button onclick="runDailySummary()">Generate Table</button>
+    <div id="controls">
+        <input type="file" id="dailyFile" accept=".xlsx,.xls">
+        <button onclick="runDailySummary()">Generate</button>
         <button onclick="downloadOutput()">Download Output</button>
-        <button onclick="downloadPDF()">Download PDF</button>
     </div>
 
-    <div id="dateHeader"></div>
-
-    <div id="reportContainer">
-        <div id="leftColumn" class="column"></div>
-        <div id="rightColumn" class="column"></div>
-    </div>
-
-    <!-- ⭐ Hidden tables — CHANGED from <h2> to <h3> -->
-    <div style="display:none;">
-        <h3>Summary by Location</h3>
-        <table id="locTable"></table>
-
-        <h3>Summary by Modality</h3>
-        <table id="modTable"></table>
-
-        <h3># No Show Summary</h3>
-        <table id="noShowSummaryTable"></table>
-
-        <h3>Total Reported / Pending Read</h3>
-        <table id="statusTable"></table>
-
-        <h3>Backlog (All Dates Before Latest DOS)</h3>
-        <table id="backlogTable"></table>
-
-        <h3># Historical Exam Data</h3>
-        <table id="historicalSummaryTable"></table>
-
-        <h3>Summary by Modality per Location</h3>
-        <table id="modalityPerLocationTable"></table>
-
-        <h3>Summary No Show by Modality per Location</h3>
-        <table id="noShowPerLocationTable"></table>
+    <div id="mainContainer">
+        <div id="leftColumn"></div>
+        <div id="rightColumn"></div>
     </div>
 
 </body>
