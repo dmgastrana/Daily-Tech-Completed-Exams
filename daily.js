@@ -19,7 +19,7 @@ const TABLE_STRUCTURE = {
 };
 
 /* ============================================================
-   MAIN ENTRY
+   MAIN ENTRY — DETECT CSV OR EXCEL
    ============================================================ */
 
 function runDailySummary() {
@@ -34,16 +34,43 @@ function runDailySummary() {
     const reader = new FileReader();
 
     reader.onload = function (e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const fileName = file.name.toLowerCase();
 
-        generateMonthlyTables(aoa);
+        if (fileName.endsWith(".csv")) {
+            parseCSV(e.target.result);
+        } else {
+            parseExcel(e.target.result);
+        }
     };
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file); // CSV needs text
+}
+
+/* ============================================================
+   PARSE CSV
+   ============================================================ */
+
+function parseCSV(text) {
+    const rows = text.split(/\r?\n/).map(r => r.split(","));
+
+    // CSV headers are ALWAYS row 0
+    const aoa = rows;
+
+    generateMonthlyTables(aoa);
+}
+
+/* ============================================================
+   PARSE EXCEL
+   ============================================================ */
+
+function parseExcel(buffer) {
+    const data = new Uint8Array(buffer);
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    generateMonthlyTables(aoa);
 }
 
 /* ============================================================
@@ -72,7 +99,10 @@ function fixDate(value) {
 function generateMonthlyTables(aoa) {
     const monthlyData = {};
 
-    for (let r = 8; r < aoa.length; r++) {
+    // CSV starts at row 1, Excel starts at row 8 — detect automatically
+    const startRow = aoa[0][0] === "Modality" ? 1 : 8;
+
+    for (let r = startRow; r < aoa.length; r++) {
         const modality = String(aoa[r][0] || "").trim();
         const locationFull = String(aoa[r][1] || "").trim();
         const dosRaw = aoa[r][5];
@@ -119,7 +149,6 @@ function displayMonthlyTables(monthlyData) {
     Object.keys(monthlyData)
         .sort()
         .forEach(monthKey => {
-            const [year, month] = monthKey.split("-");
             const dates = Object.keys(monthlyData[monthKey]).sort(
                 (a, b) => new Date(a) - new Date(b)
             );
