@@ -1,5 +1,5 @@
 /* ============================================================
-   CONFIGURATION — EXACT TABLE FORMAT (YOUR SCREENSHOT)
+   CONFIGURATION — EXACT TABLE FORMAT
    ============================================================ */
 
 const LOCATION_MAP = {
@@ -43,24 +43,20 @@ function runDailySummary() {
         }
     };
 
-    reader.readAsText(file); // CSV needs text
+    reader.readAsText(file);
 }
 
 /* ============================================================
-   PARSE CSV
+   PARSE CSV — HEADER IS IN ROW 8
    ============================================================ */
 
 function parseCSV(text) {
     const rows = text.split(/\r?\n/).map(r => r.split(","));
-
-    // CSV headers are ALWAYS row 0
-    const aoa = rows;
-
-    generateMonthlyTables(aoa);
+    generateMonthlyTables(rows, "csv");
 }
 
 /* ============================================================
-   PARSE EXCEL
+   PARSE EXCEL — HEADER IS IN ROW 8
    ============================================================ */
 
 function parseExcel(buffer) {
@@ -70,7 +66,7 @@ function parseExcel(buffer) {
     const sheet = workbook.Sheets[sheetName];
     const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    generateMonthlyTables(aoa);
+    generateMonthlyTables(aoa, "excel");
 }
 
 /* ============================================================
@@ -87,32 +83,32 @@ function fixDate(value) {
 
     const cleaned = String(value).trim();
     const d = new Date(cleaned);
-    if (!isNaN(d)) return d.toLocaleDateString("en-US");
+    if (!isNaNa(d)) return d.toLocaleDateString("en-US");
 
     return "";
 }
 
 /* ============================================================
-   MONTHLY TABLE GENERATION
+   MONTHLY TABLE GENERATION — HEADER IN ROW 8
    ============================================================ */
 
-function generateMonthlyTables(aoa) {
+function generateMonthlyTables(aoa, fileType) {
     const monthlyData = {};
 
-    // CSV starts at row 1, Excel starts at row 8 — detect automatically
-    const startRow = aoa[0][0] === "Modality" ? 1 : 8;
+    // BOTH CSV and Excel use header row 8
+    const startRow = 9;
 
     for (let r = startRow; r < aoa.length; r++) {
-        const modality = String(aoa[r][0] || "").trim();
-        const locationFull = String(aoa[r][1] || "").trim();
-        const dosRaw = aoa[r][5];
-        const apptID = String(aoa[r][6] || "").trim();
+        const modality = String(aoa[r][0] || "").trim(); // Column A
+        const locationFull = String(aoa[r][1] || "").trim(); // Column B
+        const dosRaw = aoa[r][5]; // Column F
+        const apptID = String(aoa[r][6] || "").trim(); // Column G
 
         const dos = fixDate(dosRaw);
         if (!dos) continue;
 
         const loc = LOCATION_MAP[locationFull];
-        if (!loc) continue; // ignore other locations
+        if (!loc) continue;
 
         const dateObj = new Date(dos);
         const monthKey = `${dateObj.getFullYear()}-${dateObj.getMonth() + 1}`;
@@ -121,7 +117,7 @@ function generateMonthlyTables(aoa) {
         if (!monthlyData[monthKey][dos]) monthlyData[monthKey][dos] = {};
         if (!monthlyData[monthKey][dos][loc]) monthlyData[monthKey][dos][loc] = {};
 
-        // Count each row by Appointment ID (NOT unique)
+        // Count each row by Appointment ID
         if (!monthlyData[monthKey][dos][loc].apptCount) {
             monthlyData[monthKey][dos][loc].apptCount = 0;
         }
@@ -182,7 +178,6 @@ function displayMonthlyTables(monthlyData) {
 function buildMonthlyTable(monthData, dates) {
     const table = document.createElement("table");
 
-    /* HEADER ROW */
     let header = "<tr><th>Date</th>";
 
     Object.keys(TABLE_STRUCTURE).forEach(loc => {
@@ -196,7 +191,6 @@ function buildMonthlyTable(monthData, dates) {
 
     table.innerHTML = header;
 
-    /* DAILY ROWS */
     dates.forEach(dos => {
         let row = `<tr><td>${dos}</td>`;
         let grandTotal = 0;
@@ -220,7 +214,6 @@ function buildMonthlyTable(monthData, dates) {
         table.innerHTML += row;
     });
 
-    /* MONTHLY TOTAL ROW */
     let totalRow = "<tr><td>Grand Total</td>";
     let monthGrandTotal = 0;
 
@@ -263,4 +256,3 @@ function buildMonthlyTable(monthData, dates) {
 function downloadOutput() {
     alert("Monthly tables are visual only. No text output generated.");
 }
-
