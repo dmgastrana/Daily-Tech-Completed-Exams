@@ -256,3 +256,4 @@ function buildMonthlyTable(monthData, dates) {
 function downloadOutput() {
     alert("Monthly tables are visual only. No text output generated.");
 }
+
