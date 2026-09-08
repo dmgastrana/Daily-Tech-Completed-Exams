@@ -1,5 +1,5 @@
 /* ============================================================
-   CONFIGURATION
+   LOCATION + MODALITY TABLE STRUCTURE
    ============================================================ */
 
 const LOCATION_MAP = {
@@ -11,15 +11,15 @@ const LOCATION_MAP = {
 };
 
 const TABLE_STRUCTURE = {
-    AR: ["CT", "Bone Density", "MG", "US", "XR"],
-    CI: ["CT", "Bone Density", "MG", "MR", "US", "XR"],
-    MP: ["CT", "Bone Density", "MG", "MR", "US", "XR"],
-    SG: ["CT", "EKG", "MG", "MR", "US", "XR"],
-    SSG: ["CT", "EKG", "MG", "MR", "US", "XR"]
+    AR: ["CT", "DEXA", "MG", "US", "XR"],
+    CI: ["CT", "DEXA", "MG", "MR", "US", "XR"],
+    MP: ["CT", "DEXA", "MG", "MR", "US", "XR"],
+    SG: ["CT", "ECG", "MG", "MR", "US", "XR"],
+    SSG: ["CT", "ECG", "MG", "MR", "US", "XR"]
 };
 
 /* ============================================================
-   STATUS MESSAGE HANDLING
+   STATUS HANDLING
    ============================================================ */
 
 function showStatus(id, msg) {
@@ -47,53 +47,49 @@ function runDailySummary() {
         return;
     }
 
-    const fileName = file.name.toLowerCase();
-    showStatus("processing", "File detected: " + fileName);
-
     const reader = new FileReader();
+    const fileName = file.name.toLowerCase();
 
     reader.onload = function(e) {
         let text = e.target.result;
 
-        // CSV fallback detection
         if (fileName.endsWith(".csv")) {
-            if (!text || text.trim().length < 10) {
-                // Retry using ArrayBuffer
-                const reader2 = new FileReader();
-                reader2.onload = function(ev) {
-                    const buffer = ev.target.result;
-                    const decoder = new TextDecoder("utf-8");
-                    const decoded = decoder.decode(buffer);
-                    parseCSV(decoded);
-                };
-                reader2.readAsArrayBuffer(file);
-                return;
-            }
-
             parseCSV(text);
-            return;
+        } else {
+            parseExcel(e.target.result);
         }
-
-        // Excel
-        parseExcel(e.target.result);
     };
 
     if (fileName.endsWith(".csv")) {
-        reader.readAsText(file); // may fail silently → fallback handles it
+        reader.readAsText(file);
     } else {
         reader.readAsArrayBuffer(file);
     }
 }
 
 /* ============================================================
-   PARSE CSV
+   PARSE CSV — UTF‑16 + TAB DELIMITED
    ============================================================ */
 
 function parseCSV(text) {
-    showStatus("processing", "CSV loaded — splitting rows…");
+    // Detect UTF‑16 LE BOM
+    if (text.charCodeAt(0) === 0xFEFF || text.charCodeAt(1) === 0x00) {
+        const decoder = new TextDecoder("utf-16le");
+        const uint8 = new Uint8Array(text.length * 2);
+        for (let i = 0; i < text.length; i++) {
+            uint8[i * 2] = text.charCodeAt(i) & 0xFF;
+            uint8[i * 2 + 1] = text.charCodeAt(i) >> 8;
+        }
+        text = decoder.decode(uint8);
+    }
 
-    const rows = text.split(/\r?\n/).map(r => r.split(","));
-    generateMonthlyTables(rows);
+    // Split rows
+    const rows = text.split(/\r?\n/);
+
+    // Split columns by TAB
+    const aoa = rows.map(r => r.split("\t"));
+
+    generateMonthlyTables(aoa);
 }
 
 /* ============================================================
@@ -101,8 +97,6 @@ function parseCSV(text) {
    ============================================================ */
 
 function parseExcel(buffer) {
-    showStatus("processing", "Excel loaded — converting…");
-
     const workbook = XLSX.read(buffer, { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -116,23 +110,15 @@ function parseExcel(buffer) {
 
 function fixDate(value) {
     if (!value) return "";
-
-    if (typeof value === "number") {
-        const d = XLSX.SSF.parse_date_code(value);
-        return `${String(d.m).padStart(2, "0")}/${String(d.d).padStart(2, "0")}/${d.y}`;
-    }
-
     const d = new Date(String(value).trim());
     return isNaN(d) ? "" : d.toLocaleDateString("en-US");
 }
 
 /* ============================================================
-   MONTHLY TABLE GENERATION
+   MAIN TABLE GENERATION
    ============================================================ */
 
 function generateMonthlyTables(aoa) {
-    showStatus("processing", "Checking header row…");
-
     const HEADER_ROW = 8;
     const DATA_START = HEADER_ROW + 1;
 
@@ -145,16 +131,33 @@ function generateMonthlyTables(aoa) {
     const monthlyData = {};
 
     for (let r = DATA_START; r < aoa.length; r++) {
-        const modality = aoa[r][0];
-        const locationFull = aoa[r][1];
-        const dosRaw = aoa[r][5];
+        const row = aoa[r];
+        if (!row || row.length < 7) continue;
+
+        const modality = String(row[0] || "").trim();
+        const locationFull = String(row[1] || "").trim();
+        const dosRaw = row[5];
+        const apptID = String(row[6] || "").trim();
 
         const dos = fixDate(dosRaw);
         const loc = LOCATION_MAP[locationFull];
 
-        if (dos && loc) {
-            foundValidRow = true;
-        }
+        if (!dos || !loc || !modality) continue;
+
+        foundValidRow = true;
+
+        const dateObj = new Date(dos);
+        const monthKey = `${dateObj.getFullYear()}-${dateObj.getMonth() + 1}`;
+
+        if (!monthlyData[monthKey]) monthlyData[monthKey] = {};
+        if (!monthlyData[monthKey][dos]) monthlyData[monthKey][dos] = {};
+        if (!monthlyData[monthKey][dos][loc]) monthlyData[monthKey][dos][loc] = {};
+
+        monthlyData[monthKey][dos][loc].apptCount =
+            (monthlyData[monthKey][dos][loc].apptCount || 0) + 1;
+
+        monthlyData[monthKey][dos][loc][modality] =
+            (monthlyData[monthKey][dos][loc][modality] || 0) + 1;
     }
 
     if (!foundValidRow) {
@@ -162,9 +165,99 @@ function generateMonthlyTables(aoa) {
         return;
     }
 
-    showStatus("processing", "Building tables…");
-
-    // (Your existing table-building code goes here)
+    displayMonthlyTables(monthlyData);
     showStatus("successMessage", "Completed! Tables generated below.");
+}
+
+/* ============================================================
+   DISPLAY TABLES
+   ============================================================ */
+
+function displayMonthlyTables(monthlyData) {
+    const left = document.getElementById("leftColumn");
+    const right = document.getElementById("rightColumn");
+
+    left.innerHTML = "";
+    right.innerHTML = "";
+
+    Object.keys(monthlyData)
+        .sort()
+        .forEach(monthKey => {
+            const dates = Object.keys(monthlyData[monthKey]).sort(
+                (a, b) => new Date(a) - new Date(b)
+            );
+
+            const firstDOS = dates[0];
+            const lastDOS = dates[dates.length - 1];
+
+            const title = `${firstDOS} – ${lastDOS}`;
+            const table = buildMonthlyTable(monthlyData[monthKey], dates);
+
+            const wrapper = document.createElement("div");
+            wrapper.style.width = "100%";
+            wrapper.style.marginBottom = "40px";
+
+            const titleEl = document.createElement("div");
+            titleEl.className = "titleRow";
+            titleEl.textContent = title;
+
+            wrapper.appendChild(titleEl);
+            wrapper.appendChild(table);
+
+            left.appendChild(wrapper);
+        });
+}
+
+/* ============================================================
+   BUILD TABLE
+   ============================================================ */
+
+function buildMonthlyTable(monthData, dates) {
+    const table = document.createElement("table");
+
+    let header = "<tr><th>Date</th>";
+
+    Object.keys(TABLE_STRUCTURE).forEach(loc => {
+        TABLE_STRUCTURE[loc].forEach(mod => {
+            header += `<th>${loc} ${mod}</th>`;
+        });
+        header += `<th>${loc} Total</th>`;
+    });
+
+    header += "<th>Grand Total</th></tr>";
+    table.innerHTML = header;
+
+    dates.forEach(dos => {
+        let row = `<tr><td>${dos}</td>`;
+        let grandTotal = 0;
+
+        Object.keys(TABLE_STRUCTURE).forEach(loc => {
+            let locTotal = monthData[dos][loc].apptCount || 0;
+
+            TABLE_STRUCTURE[loc].forEach(mod => {
+                const val =
+                    monthData[dos][loc] && monthData[dos][loc][mod]
+                        ? monthData[dos][loc][mod]
+                        : "";
+                row += `<td>${val}</td>`;
+            });
+
+            row += `<td>${locTotal || ""}</td>`;
+            grandTotal += locTotal;
+        });
+
+        row += `<td>${grandTotal || ""}</td></tr>`;
+        table.innerHTML += row;
+    });
+
+    return table;
+}
+
+/* ============================================================
+   DOWNLOAD OUTPUT
+   ============================================================ */
+
+function downloadOutput() {
+    alert("Monthly tables are visual only.");
 }
 
