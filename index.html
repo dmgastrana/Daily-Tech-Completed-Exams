@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,7 +61,7 @@
             font-weight: bold;
         }
 
-        #processing {
+        #processing, #errorMessage, #successMessage {
             text-align: center;
             font-size: 18px;
             font-weight: bold;
@@ -70,29 +69,11 @@
             display: none;
         }
 
-        #errorMessage {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 15px;
-            color: red;
-            display: none;
-        }
-
-        #successMessage {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 15px;
-            color: green;
-            display: none;
-        }
+        #errorMessage { color: red; }
+        #successMessage { color: green; }
     </style>
 
-    <!-- XLSX Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- Your JS file -->
     <script src="daily.js"></script>
 </head>
 
@@ -101,14 +82,13 @@
     <h1>Monthly Completed Exams</h1>
 
     <div id="controls">
-        <input type="file" id="dailyFile" accept=".xlsx,.xls,.csv">
+        <input type="file" id="dailyFile" accept=".csv,.xlsx,.xls">
         <button onclick="runDailySummary()">Generate</button>
         <button onclick="downloadOutput()">Download Output</button>
     </div>
 
-    <!-- Status Messages -->
     <div id="processing">Processing… please wait</div>
-    <div id="errorMessage">Error: Could not generate tables. Please check your file.</div>
+    <div id="errorMessage">Error: Could not generate tables.</div>
     <div id="successMessage">Completed! Tables generated below.</div>
 
     <div id="mainContainer">
