@@ -60,12 +60,26 @@
             margin-bottom: 8px;
             font-weight: bold;
         }
+
+        #processing {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+        }
+
+        #errorMessage {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            color: red;
+            display: none;
+        }
     </style>
 
-    <!-- XLSX Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- Your JS file -->
     <script src="daily.js"></script>
 </head>
 
@@ -74,10 +88,14 @@
     <h1>Monthly Completed Exams</h1>
 
     <div id="controls">
-        <input type="file" id="dailyFile" accept=".xlsx,.xls">
+        <input type="file" id="dailyFile" accept=".xlsx,.xls,.csv">
         <button onclick="runDailySummary()">Generate</button>
         <button onclick="downloadOutput()">Download Output</button>
     </div>
+
+    <div id="processing">Processing… please wait</div>
+
+    <div id="errorMessage">Error: Could not generate tables. Please check your file.</div>
 
     <div id="mainContainer">
         <div id="leftColumn"></div>
