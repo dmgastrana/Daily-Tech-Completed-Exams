@@ -124,7 +124,7 @@ function generateDailyTables(aoa) {
 
         const modalityMap = {
             "DEXA": "Bone Density",
-            "EKG": "EKG"
+            "ECG": "ECG"
         };
         const modality = modalityMap[modalityRaw] || modalityRaw;
 
