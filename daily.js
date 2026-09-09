@@ -14,8 +14,8 @@ const FACILITY_MODALITIES = {
     "DMG Arcadia": ["CT", "Bone Density", "MG", "US", "XR"],
     "DMG City of Industry": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
     "DMG Monterey Park": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
-    "DMG San Gabriel": ["CT", "Bone Density", "ECG", "MG", "MR", "US", "XR"],
-    "SYN San Gabriel": ["CT", "ECG", "MR", "US", "XR"]
+    "DMG San Gabriel": ["CT", "Bone Density", "EKG", "MG", "MR", "US", "XR"],
+    "SYN San Gabriel": ["CT", "EKG", "MR", "US", "XR"]
 };
 
 /* ============================================================
@@ -124,7 +124,7 @@ function generateDailyTables(aoa) {
 
         const modalityMap = {
             "DEXA": "Bone Density",
-            "ECG": "ECG"
+            "EKG": "EKG"
         };
         const modality = modalityMap[modalityRaw] || modalityRaw;
 
@@ -214,22 +214,24 @@ function displayDailyTables(daily) {
                 let facTotal = 0;
 
                 mods.forEach(mod => {
-                    const val = daily[dos][fac]?.[mod] || "";
-                    row += `<td>${val}</td>`;
-                    facTotal += Number(val || 0);
+                    const raw = daily[dos][fac]?.[mod] || 0;
+                    const val = raw === 0 ? "" : raw;
 
-                    monthlyTotals[fac][mod] += Number(val || 0);
-                    finalTotals[fac][mod] += Number(val || 0);
+                    row += `<td>${val}</td>`;
+                    facTotal += Number(raw);
+
+                    monthlyTotals[fac][mod] += Number(raw);
+                    finalTotals[fac][mod] += Number(raw);
                 });
 
-                row += `<td>${facTotal}</td>`;
+                row += `<td>${facTotal === 0 ? "" : facTotal}</td>`;
                 grandTotal += facTotal;
 
                 monthlyTotals[fac].Total += facTotal;
                 finalTotals[fac].Total += facTotal;
             });
 
-            row += `<td>${grandTotal}</td></tr>`;
+            row += `<td>${grandTotal === 0 ? "" : grandTotal}</td></tr>`;
             table.innerHTML += row;
 
             monthlyGrandTotal += grandTotal;
@@ -240,12 +242,14 @@ function displayDailyTables(daily) {
 
         Object.values(FACILITIES).forEach(fac => {
             FACILITY_MODALITIES[fac].forEach(mod => {
-                totalRow += `<td><b>${monthlyTotals[fac][mod]}</b></td>`;
+                const v = monthlyTotals[fac][mod];
+                totalRow += `<td><b>${v === 0 ? "" : v}</b></td>`;
             });
-            totalRow += `<td><b>${monthlyTotals[fac].Total}</b></td>`;
+            const ft = monthlyTotals[fac].Total;
+            totalRow += `<td><b>${ft === 0 ? "" : ft}</b></td>`;
         });
 
-        totalRow += `<td><b>${monthlyGrandTotal}</b></td></tr>`;
+        totalRow += `<td><b>${monthlyGrandTotal === 0 ? "" : monthlyGrandTotal}</b></td></tr>`;
         table.innerHTML += totalRow;
 
         left.appendChild(table);
@@ -272,9 +276,11 @@ function displayDailyTables(daily) {
 
     Object.values(FACILITIES).forEach(fac => {
         FACILITY_MODALITIES[fac].forEach(mod => {
-            totalRow += `<td><b>${finalTotals[fac][mod]}</b></td>`;
+            const v = finalTotals[fac][mod];
+            totalRow += `<td><b>${v === 0 ? "" : v}</b></td>`;
         });
-        totalRow += `<td><b>${finalTotals[fac].Total}</b></td>`;
+        const ft = finalTotals[fac].Total;
+        totalRow += `<td><b>${ft === 0 ? "" : ft}</b></td>`;
     });
 
     totalRow += `<td><b>${finalGrandTotal}</b></td></tr>`;
