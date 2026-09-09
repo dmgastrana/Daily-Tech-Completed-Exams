@@ -15,7 +15,7 @@ const FACILITY_MODALITIES = {
     "DMG City of Industry": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
     "DMG Monterey Park": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
     "DMG San Gabriel": ["CT", "Bone Density", "ECG", "MG", "MR", "US", "XR"],
-    "SYN San Gabriel": ["CT", "EKG", "MR", "US", "XR"]
+    "SYN San Gabriel": ["CT", "ECG", "MR", "US", "XR"]
 };
 
 /* ============================================================
