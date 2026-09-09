@@ -151,7 +151,7 @@ function getMonthKey(dateStr) {
 }
 
 /* ============================================================
-   DISPLAY TABLES — ONE TABLE PER MONTH + ONE FINAL TOTAL ROW
+   DISPLAY — SEPARATE TABLES PER MONTH + MONTHLY TOTAL ROW + FINAL TOTAL
    ============================================================ */
 
 function displayDailyTables(daily) {
@@ -168,7 +168,6 @@ function displayDailyTables(daily) {
     });
 
     const finalTotals = {};
-
     Object.values(FACILITIES).forEach(fac => {
         finalTotals[fac] = {};
         FACILITY_MODALITIES[fac].forEach(mod => finalTotals[fac][mod] = 0);
@@ -197,6 +196,15 @@ function displayDailyTables(daily) {
         header += `<th></th></tr>`;
         table.innerHTML = header;
 
+        let monthlyTotals = {};
+        Object.values(FACILITIES).forEach(fac => {
+            monthlyTotals[fac] = {};
+            FACILITY_MODALITIES[fac].forEach(mod => monthlyTotals[fac][mod] = 0);
+            monthlyTotals[fac].Total = 0;
+        });
+
+        let monthlyGrandTotal = 0;
+
         dates.forEach(dos => {
             let row = `<tr><td>${dos}</td>`;
             let grandTotal = 0;
@@ -210,20 +218,35 @@ function displayDailyTables(daily) {
                     row += `<td>${val}</td>`;
                     facTotal += Number(val || 0);
 
+                    monthlyTotals[fac][mod] += Number(val || 0);
                     finalTotals[fac][mod] += Number(val || 0);
                 });
 
                 row += `<td>${facTotal}</td>`;
                 grandTotal += facTotal;
 
+                monthlyTotals[fac].Total += facTotal;
                 finalTotals[fac].Total += facTotal;
             });
 
             row += `<td>${grandTotal}</td></tr>`;
             table.innerHTML += row;
 
+            monthlyGrandTotal += grandTotal;
             finalGrandTotal += grandTotal;
         });
+
+        let totalRow = `<tr><td><b>Monthly Total</b></td>`;
+
+        Object.values(FACILITIES).forEach(fac => {
+            FACILITY_MODALITIES[fac].forEach(mod => {
+                totalRow += `<td><b>${monthlyTotals[fac][mod]}</b></td>`;
+            });
+            totalRow += `<td><b>${monthlyTotals[fac].Total}</b></td>`;
+        });
+
+        totalRow += `<td><b>${monthlyGrandTotal}</b></td></tr>`;
+        table.innerHTML += totalRow;
 
         left.appendChild(table);
     });
@@ -267,4 +290,3 @@ function displayDailyTables(daily) {
 function downloadOutput() {
     alert("Daily tables are visual only.");
 }
-
