@@ -261,3 +261,4 @@ function downloadOutput() {
     alert("Monthly tables are visual only.");
 }
 
+
