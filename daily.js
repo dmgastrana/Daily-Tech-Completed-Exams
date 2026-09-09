@@ -10,7 +10,6 @@ const FACILITIES = {
     "Synergy San Gabriel": "SYN San Gabriel"
 };
 
-// EXACT modality sets per facility
 const FACILITY_MODALITIES = {
     "DMG Arcadia": ["CT", "Bone Density", "MG", "US", "XR"],
     "DMG City of Industry": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
@@ -20,7 +19,7 @@ const FACILITY_MODALITIES = {
 };
 
 /* ============================================================
-   STATUS HANDLING
+   STATUS
    ============================================================ */
 
 function showStatus(id, msg) {
@@ -56,7 +55,7 @@ function runDailySummary() {
 }
 
 /* ============================================================
-   FIX DATE (Excel serials + text)
+   DATE FIX
    ============================================================ */
 
 function fixDate(value) {
@@ -72,7 +71,7 @@ function fixDate(value) {
 }
 
 /* ============================================================
-   PARSE CSV USING XLSX ENGINE
+   PARSE CSV
    ============================================================ */
 
 function parseCSV(raw) {
@@ -87,7 +86,7 @@ function parseCSV(raw) {
 }
 
 /* ============================================================
-   PARSE EXCEL
+   PARSE XLSX
    ============================================================ */
 
 function parseExcel(buffer) {
@@ -99,7 +98,7 @@ function parseExcel(buffer) {
 }
 
 /* ============================================================
-   MAIN DAILY TABLE GENERATION — EXACT FORMAT
+   BUILD DAILY DATA
    ============================================================ */
 
 function generateDailyTables(aoa) {
@@ -141,92 +140,131 @@ function generateDailyTables(aoa) {
 }
 
 /* ============================================================
-   DISPLAY DAILY TABLES — EXACT FORMAT + MONTHLY TOTAL ROW
+   GROUP DATES BY MONTH
+   ============================================================ */
+
+function getMonthKey(dateStr) {
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    return `${y}-${m.toString().padStart(2, "0")}`;
+}
+
+/* ============================================================
+   DISPLAY TABLES — ONE TABLE PER MONTH + ONE FINAL TOTAL ROW
    ============================================================ */
 
 function displayDailyTables(daily) {
     const left = document.getElementById("leftColumn");
     left.innerHTML = "";
 
-    const dates = Object.keys(daily).sort((a, b) => new Date(a) - new Date(b));
+    const allDates = Object.keys(daily).sort((a, b) => new Date(a) - new Date(b));
 
-    const table = document.createElement("table");
-
-    /* GROUPED FACILITY HEADERS — EXACT FORMAT */
-    let header = "<tr><th>Date</th>";
-
-    Object.values(FACILITIES).forEach(fac => {
-        const mods = FACILITY_MODALITIES[fac];
-        header += `<th colspan="${mods.length + 1}">${fac}</th>`;
+    const months = {};
+    allDates.forEach(d => {
+        const key = getMonthKey(d);
+        if (!months[key]) months[key] = [];
+        months[key].push(d);
     });
 
-    header += `<th>Grand Total</th></tr><tr><th></th>`;
+    const finalTotals = {};
 
     Object.values(FACILITIES).forEach(fac => {
-        const mods = FACILITY_MODALITIES[fac];
-        mods.forEach(mod => header += `<th>${mod}</th>`);
-        header += `<th>Total</th>`;
+        finalTotals[fac] = {};
+        FACILITY_MODALITIES[fac].forEach(mod => finalTotals[fac][mod] = 0);
+        finalTotals[fac].Total = 0;
     });
 
-    header += `<th></th></tr>`;
-    table.innerHTML = header;
+    let finalGrandTotal = 0;
 
-    /* DAILY ROWS */
-    dates.forEach(dos => {
-        let row = `<tr><td>${dos}</td>`;
-        let grandTotal = 0;
+    Object.keys(months).sort().forEach(monthKey => {
+        const dates = months[monthKey];
+
+        const table = document.createElement("table");
+
+        let header = "<tr><th>Date</th>";
+        Object.values(FACILITIES).forEach(fac => {
+            const mods = FACILITY_MODALITIES[fac];
+            header += `<th colspan="${mods.length + 1}">${fac}</th>`;
+        });
+        header += `<th>Grand Total</th></tr><tr><th></th>`;
 
         Object.values(FACILITIES).forEach(fac => {
             const mods = FACILITY_MODALITIES[fac];
-            let facTotal = 0;
+            mods.forEach(mod => header += `<th>${mod}</th>`);
+            header += `<th>Total</th>`;
+        });
+        header += `<th></th></tr>`;
+        table.innerHTML = header;
 
-            mods.forEach(mod => {
-                const val = daily[dos][fac]?.[mod] || "";
-                row += `<td>${val}</td>`;
-                facTotal += Number(val || 0);
+        dates.forEach(dos => {
+            let row = `<tr><td>${dos}</td>`;
+            let grandTotal = 0;
+
+            Object.values(FACILITIES).forEach(fac => {
+                const mods = FACILITY_MODALITIES[fac];
+                let facTotal = 0;
+
+                mods.forEach(mod => {
+                    const val = daily[dos][fac]?.[mod] || "";
+                    row += `<td>${val}</td>`;
+                    facTotal += Number(val || 0);
+
+                    finalTotals[fac][mod] += Number(val || 0);
+                });
+
+                row += `<td>${facTotal}</td>`;
+                grandTotal += facTotal;
+
+                finalTotals[fac].Total += facTotal;
             });
 
-            row += `<td>${facTotal}</td>`;
-            grandTotal += facTotal;
+            row += `<td>${grandTotal}</td></tr>`;
+            table.innerHTML += row;
+
+            finalGrandTotal += grandTotal;
         });
 
-        row += `<td>${grandTotal}</td></tr>`;
-        table.innerHTML += row;
+        left.appendChild(table);
     });
 
-    /* MONTHLY TOTAL ROW — EXACT FORMAT */
-    let totalRow = `<tr><td><b>Monthly Total</b></td>`;
-    let monthlyGrand = 0;
+    const finalTable = document.createElement("table");
 
+    let finalHeader = "<tr><th>ALL MONTHS TOTAL</th>";
     Object.values(FACILITIES).forEach(fac => {
         const mods = FACILITY_MODALITIES[fac];
-        let facMonthly = 0;
+        finalHeader += `<th colspan="${mods.length + 1}">${fac}</th>`;
+    });
+    finalHeader += `<th>Grand Total</th></tr><tr><th></th>`;
 
-        mods.forEach(mod => {
-            let sum = 0;
-            dates.forEach(d => {
-                sum += Number(daily[d][fac]?.[mod] || 0);
-            });
-            totalRow += `<td><b>${sum}</b></td>`;
-            facMonthly += sum;
+    Object.values(FACILITIES).forEach(fac => {
+        FACILITY_MODALITIES[fac].forEach(mod => finalHeader += `<th>${mod}</th>`);
+        finalHeader += `<th>Total</th>`;
+    });
+    finalHeader += `<th></th></tr>`;
+
+    finalTable.innerHTML = finalHeader;
+
+    let totalRow = `<tr><td><b>Final Total</b></td>`;
+
+    Object.values(FACILITIES).forEach(fac => {
+        FACILITY_MODALITIES[fac].forEach(mod => {
+            totalRow += `<td><b>${finalTotals[fac][mod]}</b></td>`;
         });
-
-        totalRow += `<td><b>${facMonthly}</b></td>`;
-        monthlyGrand += facMonthly;
+        totalRow += `<td><b>${finalTotals[fac].Total}</b></td>`;
     });
 
-    totalRow += `<td><b>${monthlyGrand}</b></td></tr>`;
-    table.innerHTML += totalRow;
+    totalRow += `<td><b>${finalGrandTotal}</b></td></tr>`;
+    finalTable.innerHTML += totalRow;
 
-    left.appendChild(table);
+    left.appendChild(finalTable);
 }
 
 /* ============================================================
-   DOWNLOAD OUTPUT
+   DOWNLOAD
    ============================================================ */
 
 function downloadOutput() {
     alert("Daily tables are visual only.");
 }
-
 
