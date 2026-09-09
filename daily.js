@@ -229,4 +229,3 @@ function downloadOutput() {
     alert("Daily tables are visual only.");
 }
 
-
