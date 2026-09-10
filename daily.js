@@ -306,23 +306,53 @@ function downloadOutput() {
     const wb = XLSX.utils.book_new();
 
     tables.forEach((table, index) => {
+
+        // Convert HTML table → sheet
         const ws = XLSX.utils.table_to_sheet(table);
 
-        // Auto-fit column widths
-        const range = XLSX.utils.decode_range(ws['!ref']);
+        // Detect real number of columns (handles uneven rows)
+        const rows = table.querySelectorAll("tr");
+        let maxCols = 0;
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll("th, td");
+            if (cells.length > maxCols) maxCols = cells.length;
+        });
+
+        const range = {
+            s: { r: 0, c: 0 },
+            e: { r: rows.length - 1, c: maxCols - 1 }
+        };
+
+        ws['!ref'] = XLSX.utils.encode_range(range);
+
+        // TRUE auto-fit column widths
         ws['!cols'] = [];
-        for (let C = range.s.c; C <= range.e.c; C++) {
-            ws['!cols'][C] = { wch: 18 }; // wide enough for headers
+
+        for (let C = 0; C < maxCols; C++) {
+            let maxLen = 0;
+
+            for (let R = 0; R <= range.e.r; R++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                const cell = ws[cellAddress];
+
+                if (cell && cell.v != null) {
+                    const text = String(cell.v);
+                    if (text.length > maxLen) maxLen = text.length;
+                }
+            }
+
+            ws['!cols'][C] = { wch: maxLen + 2 }; // perfect fit
         }
 
         // Freeze header rows
         ws['!freeze'] = { rows: 2 };
 
-        // Add borders + bold monthly totals
+        // Borders + bold monthly totals
         const lastRow = range.e.r;
 
-        for (let R = range.s.r; R <= range.e.r; R++) {
-            for (let C = range.s.c; C <= range.e.c; C++) {
+        for (let R = 0; R <= range.e.r; R++) {
+            for (let C = 0; C <= range.e.c; C++) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
 
                 // Create missing cell so borders apply everywhere
@@ -338,13 +368,13 @@ function downloadOutput() {
                         right: { style: "thin", color: { rgb: "000000" } }
                     },
                     font: {
-                        bold: R === lastRow ? true : false
+                        bold: R === lastRow
                     }
                 };
             }
         }
 
-        // Sheet name = actual month name OR final total sheet
+        // Sheet naming
         let sheetName;
 
         if (index === tables.length - 1) {
@@ -368,4 +398,3 @@ function downloadOutput() {
 
     XLSX.writeFile(wb, "Monthly_Completed_Exams.xlsx");
 }
-
