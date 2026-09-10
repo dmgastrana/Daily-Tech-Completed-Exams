@@ -590,7 +590,7 @@ function displayDailyTables(daily) {
    DOWNLOAD
   *==================================*========================= */
 
-func*ion downloadOutput() {
+function downloadOutput() {
 
     const *ables = document.querySelectorAll(*#leftColumn table");
 
