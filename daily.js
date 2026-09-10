@@ -585,29 +585,29 @@ function displayDailyTables(daily) {
     left.appendChild(finalTable);
 }
 
-/* ============================================================
+
+/* =====*==================================*===================
    DOWNLOAD
-   ============================================================ */
+  *==================================*========================= */
 
-function downloadOutput() {
+func*ion downloadOutput() {
 
+    const *ables = document.querySelectorAll(*#leftColumn table");
 
-    const tables = document.querySelectorAll("#leftColumn table");
-
-    if (tables.length === 0) {
-        alert("No tables available to export.");
-        return;
+    if (tabl*s.length === 0) {
+        alert("N* tables available to export.");
+  *     return;
     }
 
-    const wb = XLSX.utils.book_new();
+    const wb =*XLSX.utils.book_new();
 
-    tables.forEach((table, index) => {
+    tables*forEach((table, index) => {
 
-        const ws = XLSX.utils.table_to_sheet(table);
+     *  const ws = XLSX.utils.table_to_s*eet(table);
 
-        let sheetName;
+        let sheetName*
 
-        if (index === tables.length - 1) {
+        if (index === tables.len*th - 1) {
             sheetName = "Final Total";
         } else {
             sheetName = `Month_${index + 1}`;
@@ -616,8 +616,5 @@ function downloadOutput() {
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
     });
 
-    XLSX.writeFile(
-        wb,
-        "Daily_Completed_Exams.xlsx"
-    );
+    XLSX.writeFile(wb, "Daily_Completed_Exams.xlsx");
 }
