@@ -342,7 +342,7 @@ function downloadOutput() {
                 }
             }
 
-            ws['!cols'][C] = { wch: maxLen + 2 }; // perfect fit
+            ws['!cols'][C] = { wch: maxLen + 2 };
         }
 
         // Freeze header rows
@@ -355,7 +355,6 @@ function downloadOutput() {
             for (let C = 0; C <= range.e.c; C++) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
 
-                // Create missing cell so borders apply everywhere
                 if (!ws[cellAddress]) {
                     ws[cellAddress] = { t: "s", v: "" };
                 }
@@ -374,17 +373,18 @@ function downloadOutput() {
             }
         }
 
-        // Sheet naming (FIXED: first date is row 4)
+        // CORRECT sheet naming (first actual date row = row 4)
         let sheetName;
 
         if (index === tables.length - 1) {
             sheetName = "All Months Total";
         } else {
             const firstDateCell = table.querySelector("tr:nth-child(4) td:first-child");
+
             sheetName = `Month_${index + 1}`;
 
             if (firstDateCell) {
-                const d = new Date(firstDateCell.textContent);
+                const d = new Date(firstDateCell.textContent.trim());
                 if (!isNaN(d)) {
                     const month = d.toLocaleString("en-US", { month: "long" });
                     const year = d.getFullYear();
