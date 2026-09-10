@@ -374,13 +374,13 @@ function downloadOutput() {
             }
         }
 
-        // Sheet naming
+        // Sheet naming (FIXED: first date is row 4)
         let sheetName;
 
         if (index === tables.length - 1) {
             sheetName = "All Months Total";
         } else {
-            const firstDateCell = table.querySelector("tr:nth-child(3) td:first-child");
+            const firstDateCell = table.querySelector("tr:nth-child(4) td:first-child");
             sheetName = `Month_${index + 1}`;
 
             if (firstDateCell) {
@@ -398,3 +398,4 @@ function downloadOutput() {
 
     XLSX.writeFile(wb, "Monthly_Completed_Exams.xlsx");
 }
+
