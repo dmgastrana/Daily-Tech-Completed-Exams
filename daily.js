@@ -14,8 +14,8 @@ const FACILITY_MODALITIES = {
     "DMG Arcadia": ["CT", "Bone Density", "MG", "US", "XR"],
     "DMG City of Industry": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
     "DMG Monterey Park": ["CT", "Bone Density", "MG", "MR", "US", "XR"],
-    "DMG San Gabriel": ["CT", "Bone Density", "EKG", "MG", "MR", "US", "XR"],
-    "SYN San Gabriel": ["CT", "EKG", "MR", "US", "XR"]
+    "DMG San Gabriel": ["CT", "Bone Density", "ECG", "MG", "MR", "US", "XR"],
+    "SYN San Gabriel": ["CT", "ECG", "MR", "US", "XR"]
 };
 
 /* ============================================================
@@ -124,7 +124,7 @@ function generateDailyTables(aoa) {
 
         const modalityMap = {
             "DEXA": "Bone Density",
-            "EKG": "EKG"
+            "ECG": "ECG"
         };
         const modality = modalityMap[modalityRaw] || modalityRaw;
 
