@@ -293,6 +293,32 @@ function displayDailyTables(daily) {
    DOWNLOAD
    ============================================================ */
 
+
 function downloadOutput() {
-    alert("Daily tables are visual only.");
+
+    const tables = document.querySelectorAll("#leftColumn table");
+
+    if (tables.length === 0) {
+        alert("No tables available to export.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    for (let i = 0; i < tables.length; i++) {
+
+        const ws = XLSX.utils.table_to_sheet(tables[i]);
+
+        let sheetName;
+
+        if (i === tables.length - 1) {
+            sheetName = "Final Total";
+        } else {
+            sheetName = "Month_" + (i + 1);
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    }
+
+    XLSX.writeFile(wb, "Daily_Completed_Exams.xlsx");
 }
